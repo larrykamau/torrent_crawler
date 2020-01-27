@@ -1,0 +1,41 @@
+version: '3'
+volumes:
+  torrentscraper_data:
+    external: true
+
+services:
+  app:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile
+    links:
+      - database
+    volumes:
+      - ../../:/usr/app
+    ports:
+      - '8000:8000'
+    env_file:
+      - ../../.env
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database/torrentscraper
+    entrypoint:
+      - /usr/app/docker/dev/start_app.sh
+    depends_on:
+      - database
+  database:
+    image: postgres:9.6-alpine
+    expose:
+      - '5432'
+    ports:
+      - '5433:5432'
+    volumes:
+      - torrentscraper_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: torrentscraper
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 10s
+      retries: 5
